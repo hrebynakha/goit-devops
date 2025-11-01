@@ -1,6 +1,6 @@
 module "s3_backend" {
   source      = "./modules/s3-backend"
-  bucket_name = "anatolii"
+  bucket_name = "test-django-app-lesson-5"
   table_name  = "terraform-locks"
 }
 
@@ -11,7 +11,7 @@ module "s3_backend" {
 #   public_subnets     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
 #   private_subnets    = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
 #   availability_zones = ["us-west-2a", "us-west-2b", "us-west-2c"]
-#   vpc_name           = "lesson-5-vpc"
+#   vpc_name           = "vpc"
 # }
 
 
