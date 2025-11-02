@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket         = "test-bb-anatolii-b-009"
+    bucket         = "test-django-app-lesson-5"
     key            = "terraform.tfstate"
     region         = "eu-central-1"
     dynamodb_table = "terraform-locks"
