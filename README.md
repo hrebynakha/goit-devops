@@ -52,9 +52,6 @@ Push image to ECR:
 `docker push 322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-ecr:latest`
 
 
-# Postgres
-
-
 # Helm
 
 
@@ -65,7 +62,7 @@ helm repo update
 
 Deploy django app to k8s cluster
 
-`helm install django-app ./charts/django-app`
+`helm install lesson7-django-app ./charts/django-app`
 
 
 Output:
@@ -76,24 +73,52 @@ Check if it is working via k9s:
 
 `k9s`
 
-![Pods](./images/k9s-pods.png)
+![Pods](./images/pods.png)
 
 
 After any changes in out config for helm ( like add HPA ) we need to update our deployment:
 
-`helm upgrade django-app ./charts/django-app`
-
-
-Output:
-
-![Output](./images/helm-upg.png)
+`helm upgrade lesson7-django-app ./charts/django-app`
 
 
 All will be described in helm history command:
 
-`helm history django-app`
+`helm history lesson7-django-app`
 
 Output:
 
-![Output](./images/helm-history.png)
+![Output](./images/history.png)
+
+
+
+# Ports && Forwards
+
+Apply port forward for django app using `k9s`:
+
+![Port Forward](./images/p-fwd.png)
+
+
+Open app in browser:
+
+![Browser](./images/app.png)
+
+And we successfully deployed our app to k8s cluster!
+
+
+After all we can delete our cluster:
+
+`helm delete lesson7-django-app`
+
+And delete ECR repository:
+
+`aws ecr delete-repository --repository-name lesson-7-ecr --force`
+
+And destroy all resources:
+
+`terraform destroy`
+
+
+And also delete S3 bucket for terraform state:
+
+![s3](images/state.png)
 
