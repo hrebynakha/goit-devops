@@ -23,11 +23,11 @@ module "ecr" {
 
 
 module "eks" {
-  source          = "./modules/eks"          
-  cluster_name    = "eks-lesson-7-ecr"            
-  subnet_ids      = module.vpc.public_subnets     
-  instance_type   = "t2.micro"                    
-  desired_size    = 1                             
-  max_size        = 2                             
-  min_size        = 1                             
+  source        = "./modules/eks"
+  cluster_name  = "eks-lesson-7-ecr"
+  subnet_ids    = module.vpc.public_subnets
+  instance_type = "t3.micro"
+  desired_size  = 1
+  max_size      = 2
+  min_size      = 1
 }
