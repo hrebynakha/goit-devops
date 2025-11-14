@@ -40,6 +40,17 @@ controller:
   JCasC:
     defaultConfig: true
     configScripts:
+      credentials: |
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: github-token
+                      username: hrebynakha
+                      password:
+                      description: GitHub PAT
       job-config: |
         jobs:
           - script: |
