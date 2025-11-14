@@ -57,6 +57,7 @@ controller:
                         branches("*/lesson-8-9")
                       }
                     }
+                    scriptPath("django/Jenkinsfile")
                   }
                 }
               }

@@ -25,8 +25,8 @@ module "eks" {
   source        = "./modules/eks"
   cluster_name  = "eks-lesson8-9-cluster"
   subnet_ids    = module.vpc.public_subnets
-  instance_type = "t3.micro"
-  desired_size  = 8
+  instance_type = "t3.small"
+  desired_size  = 4
   max_size      = 12
   min_size      = 2
 }
@@ -73,7 +73,7 @@ provider "helm" {
 module "jenkins" {
   source       = "./modules/jenkins"
   cluster_name = module.eks.eks_cluster_name
-  kubeconfig   = "~/kube/config"
+  # kubeconfig   = "~/kube/config"
   providers = {
     helm = helm
   }
