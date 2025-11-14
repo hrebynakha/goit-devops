@@ -60,7 +60,12 @@ spec:
               git config --global --add safe.directory '*'
               git clone https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
               git checkout lesson-8-9
-              cd goit-devops/charts/django-app
+
+              echo "--- LISTING REPO CONTENT ---"
+              ls -R charts
+              echo "----------------------------"
+
+              cd charts/django-app
 
               sed -i "s/tag: .*/tag: $IMAGE_TAG/" values.yaml
 
