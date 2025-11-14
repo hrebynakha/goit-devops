@@ -57,6 +57,7 @@ spec:
         container('git') {
           withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PAT')]) {
             sh '''
+              git config --global --add safe.directory '*'
               git clone https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
               git checkout lesson-8-9
               cd goit-devops/charts/django-app
