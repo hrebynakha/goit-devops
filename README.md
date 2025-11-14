@@ -3,15 +3,59 @@
 In terraform we add new module for EKS:
 
 ```hcl
-module "eks" {
-  source        = "./modules/eks"
-  cluster_name  = "eks-lesson-7-ecr"
-  subnet_ids    = module.vpc.public_subnets
-  instance_type = "t3.micro"
-  desired_size  = 2
-  max_size      = 4
-  min_size      = 2 // need at least 2 nodes to run other pods
+
+
+data "aws_eks_cluster" "eks" {
+  name = module.eks.eks_cluster_name
+
+  depends_on = [module.eks]
 }
+
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.eks_cluster_name
+
+  depends_on = [module.eks]
+}
+
+provider "kubernetes" {
+  alias                  = "eks"
+  host                   = data.aws_eks_cluster.eks.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.eks.token
+}
+
+provider "helm" {
+  kubernetes = {
+    host                   = data.aws_eks_cluster.eks.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.eks.token
+  }
+}
+
+
+module "jenkins" {
+  source       = "./modules/jenkins"
+  cluster_name = module.eks.eks_cluster_name
+  providers = {
+    helm = helm
+  }
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+
+  depends_on = [
+    module.eks
+  ]
+}
+
+
+module "argo_cd" {
+  source        = "./modules/argo-cd"
+  namespace     = "argocd"
+  chart_version = "5.46.4"
+}
+
+
+
 ```
 
 And apply changes:
@@ -22,10 +66,20 @@ terraform plan
 terraform apply
 ```
 
-Save ECR repository URL, it will be used in django app
+After all infrastructure is created we can see this output pods:
 
-In my case it is: `322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-ecr`
+![pods](./images/pods.png)
 
+Save ECR repository URL, it will be used to push image to ECR
+
+In my case it is: `322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-8-9-ecr`
+
+and provide it to Jenkinsfile:
+
+```Jenkinsfile
+ECR_REGISTRY = "322345936550.dkr.ecr.eu-central-1.amazonaws.com"
+IMAGE_NAME   = "lesson-8-9-ecr"
+```
 
 # EKS
 For EKS cluster we need to get kubeconfig file
@@ -36,89 +90,90 @@ Check if it is working:
 
 `kubectl get nodes`
 
+After this we can comment our providers in main.tf file
+and use the local config:
 
-# Django App
+```hcl
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+}
 
-Create image for django app and push it to ECR
+provider "helm" {
+  kubernetes = {
+    config_path = "~/.kube/config"
+  }
+}
+```
 
-`docker build -t 322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-ecr:latest ./django`
+# Jenkins
 
-Login to AWS:
-
-`aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 322345936550.dkr.ecr.eu-central-1.amazonaws.com`
-
-Push image to ECR:
-
-`docker push 322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-7-ecr:latest`
-
-
-# Helm
-
-
-helm repo add bitnami https://charts.bitnami.com/bitnami
-
-helm repo update
+Jenkins we autoconfigure using the JCasC
 
 
-Deploy django app to k8s cluster
+add credentials to jenkins:
 
-`helm install lesson7-django-app ./charts/django-app`
+```yaml
+credentials: |
+        credentials:
+          system:
+            domainCredentials:
+              - credentials:
+                  - usernamePassword:
+                      scope: GLOBAL
+                      id: github-token
+                      username: hrebynakha
+                      password: # provide your github token here
+                      description: GitHub PAT
+```
 
+add new job to jenkins:
 
-Output:
+```yaml
+jobs:
+- script: |
+    folder('jcasc') # create folder jcasc
 
-![Output](./images/helm-i.png)
-
-Check if it is working via k9s:
-
-`k9s`
-
-![Pods](./images/pods.png)
-
-
-After any changes in out config for helm ( like add HPA ) we need to update our deployment:
-
-`helm upgrade lesson7-django-app ./charts/django-app`
-
-
-All will be described in helm history command:
-
-`helm history lesson7-django-app`
-
-Output:
-
-![Output](./images/history.png)
+- script: |
+    pipelineJob("jcasc/goit-django-docker")  # create pipeline job
+    ....
+```
 
 
 
-# Ports && Forwards
+In Jenkins we can see this:
+Credentials:
+![credentials](./images/jks-pat.png)
 
-Apply port forward for django app using `k9s`:
-
-![Port Forward](./images/p-fwd.png)
-
-
-Open app in browser:
-
-![Browser](./images/app.png)
-
-And we successfully deployed our app to k8s cluster!
+JCasC:
+![jcasc](./images/jcasc.png)
 
 
-After all we can delete our cluster:
-
-`helm delete lesson7-django-app`
-
-And delete ECR repository:
-
-`aws ecr delete-repository --repository-name lesson-7-ecr --force`
-
-And destroy all resources:
-
-`terraform destroy`
 
 
-And also delete S3 bucket for terraform state:
+after this we can run pipeline job:
 
-![s3](images/state.png)
+![pipeline](./images/jks-job.png)
 
+# ArgoCD
+
+ArgoCD we autoconfigure using the  helm chart
+In the  argocd module we provide values.yaml file with the values for the chart to add application automatically
+```yaml
+repositories:
+  - name: goit-devops-django-app
+    url: "https://github.com/hrebynakha/goit-devops.git"
+    username: hrebynakha
+    password: # provide your github token here
+```
+To verify that our helm chart was deployed we can use `k9s` to see it:
+
+![helm](./images/helm-charts.png)
+
+After argocd module was up by terraform and helm chart was deployed we can see application in argocd:
+
+![argocd](./images/argo-app.png)
+
+
+After application was synchronized and forwarding port to local machine we can see this:
+
+![TestApp](./images/app-tes.png)
