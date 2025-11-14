@@ -46,34 +46,17 @@ controller:
               folder('jcasc')
 
           - script: |
-              job('jcasc/seed-job') {
-                description('Job to generate pipeline for Django project')
-                scm {
-                  git {
-                    remote {
-                      url('https://github.com/hrebynakha/goit-devops.git')
-                    }
-                    branches('*/lesson-8-9')
-                  }
-                }
-                steps {
-                  dsl {
-                    text('''
-                      pipelineJob("goit-django-docker") {
-                        definition {
-                          cpsScm {
-                            scm {
-                              git {
-                                remote {
-                                  url("https://github.com/hrebynakha/goit-devops.git")
-                                }
-                                branches("*/lesson-8-9")
-                              }
-                            }
-                          }
+              pipelineJob("jcasc/goit-django-docker") {
+                definition {
+                  cpsScm {
+                    scm {
+                      git {
+                        remote {
+                          url("https://github.com/hrebynakha/goit-devops.git")
                         }
+                        branches("*/lesson-8-9")
                       }
-                    ''')
+                    }
                   }
                 }
               }
