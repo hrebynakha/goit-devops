@@ -38,37 +38,42 @@ controller:
     create: false
 
   JCasC:
-    seed-job: |
-      jobs:
-        - script: >
-            job('seed-job') {
-              description('Job to generate pipeline for Django project')
-              scm {
-                git {
-                  remote {
-                    url('https://github.com/hrebynakha/goit-devops.git')
+    defaultConfig: true
+    configScripts:
+      job-config: |
+        jobs:
+          - script: |
+              folder('jcasc')
+
+          - script: |
+              job('jcasc/seed-job') {
+                description('Job to generate pipeline for Django project')
+                scm {
+                  git {
+                    remote {
+                      url('https://github.com/hrebynakha/goit-devops.git')
+                    }
+                    branches('*/lesson-8-9')
                   }
-                  branches('*/lesson-8-9')
                 }
-              }
-              steps {
-                dsl {
-                  text('''
-                    pipelineJob("goit-django-docker") {
-                      definition {
-                        cpsScm {
-                          scm {
-                            git {
-                              remote {
-                                url("https://github.com/hrebynakha/goit-devops.git")
+                steps {
+                  dsl {
+                    text('''
+                      pipelineJob("goit-django-docker") {
+                        definition {
+                          cpsScm {
+                            scm {
+                              git {
+                                remote {
+                                  url("https://github.com/hrebynakha/goit-devops.git")
+                                }
+                                branches("*/lesson-8-9")
                               }
-                              branches("*/lesson-8-9")
                             }
                           }
                         }
                       }
-                    }
-                  ''')
+                    ''')
+                  }
                 }
               }
-            }
