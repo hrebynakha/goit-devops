@@ -46,7 +46,7 @@ controller:
               scm {
                 git {
                   remote {
-                    url('<https://github.com/hrebynakha/goit-devops.git>')
+                    url('https://github.com/hrebynakha/goit-devops.git')
                   }
                   branches('*/lesson-8-9')
                 }
@@ -60,7 +60,7 @@ controller:
                           scm {
                             git {
                               remote {
-                                url("<https://github.com/hrebynakha/goit-devops.git>")
+                                url("https://github.com/hrebynakha/goit-devops.git")
                               }
                               branches("*/lesson-8-9")
                             }

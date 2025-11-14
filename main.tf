@@ -1,27 +1,8 @@
-data "aws_eks_cluster" "eks" {
-  name = module.eks.eks_cluster_name
-}
-
-data "aws_eks_cluster_auth" "eks" {
-  name = module.eks.eks_cluster_name
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = data.aws_eks_cluster.eks.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
-  }
-}
-
-
-
 module "s3_backend" {
   source      = "./modules/s3-backend"
   bucket_name = "test-django-app-lesson-8-9"
   table_name  = "terraform-locks"
 }
-
 
 module "vpc" {
   source             = "./modules/vpc"
@@ -42,13 +23,34 @@ module "ecr" {
 
 module "eks" {
   source        = "./modules/eks"
-  cluster_name  = "eks-lesson-8-9-ecr"
+  cluster_name  = "eks-lesson8-9-cluster"
   subnet_ids    = module.vpc.public_subnets
   instance_type = "t3.micro"
   desired_size  = 2
-  max_size      = 4
+  max_size      = 6
   min_size      = 2
 }
+
+data "aws_eks_cluster" "eks" {
+  name = module.eks.eks_cluster_name
+
+  depends_on = [module.eks]
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.eks_cluster_name
+
+  depends_on = [module.eks]
+}
+
+provider "helm" {
+  kubernetes = {
+    host                   = data.aws_eks_cluster.eks.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.eks.token
+  }
+}
+
 
 
 module "jenkins" {
@@ -58,4 +60,6 @@ module "jenkins" {
   providers = {
     helm = helm
   }
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
 }
