@@ -1,7 +1,8 @@
 FROM python:3.14-alpine
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt --no-color
+ENV PIP_NO_COLOR=1
+RUN pip install --no-cache-dir -r requirements.txt
 ENV POSTGRES_HOST=${POSTGRES_HOST}
 ENV POSTGRES_PORT=${POSTGRES_PORT}
 ENV POSTGRES_NAME=${POSTGRES_NAME}
