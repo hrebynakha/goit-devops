@@ -61,6 +61,9 @@ spec:
               git clone https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
               git checkout lesson-8-9
 
+              git remote set-url origin https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
+
+
               echo "--- LISTING REPO CONTENT ---"
               ls -R charts
               echo "----------------------------"
