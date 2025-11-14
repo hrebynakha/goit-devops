@@ -23,7 +23,7 @@ spec:
 
   environment {
     ECR_REGISTRY = "322345936550.dkr.ecr.eu-central-1.amazonaws.com"
-    IMAGE_NAME   = "app"
+    IMAGE_NAME   = "lesson-8-9-ecr"
     IMAGE_TAG    = "latest"
   }
 
