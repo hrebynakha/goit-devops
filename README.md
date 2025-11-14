@@ -84,7 +84,7 @@ IMAGE_NAME   = "lesson-8-9-ecr"
 # EKS
 For EKS cluster we need to get kubeconfig file
 
-`aws eks --region eu-central-1 update-kubeconfig --name eks-lesson-7-ecr`
+`aws eks --region eu-central-1 update-kubeconfig --name eks-lesson8-9-cluster`
 
 Check if it is working:
 
