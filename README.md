@@ -72,7 +72,7 @@ Update our config in **settings.py** from sqlite to postgresql:
 
 ```python
 POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5433")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
 POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
 POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "password")
@@ -107,3 +107,6 @@ config:
 To verify that connection is working we can forward port to local machine using `k9s` and open our application in browser:
 
 ![TestApp](./images/app-test.png)
+
+> WARNING: do not use this in production, it is just for testing
+> NOTE: all secret values are destroyed or replaced
