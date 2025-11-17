@@ -29,7 +29,7 @@ spec:
 
   environment {
     ECR_REGISTRY = "322345936550.dkr.ecr.eu-central-1.amazonaws.com"
-    IMAGE_NAME   = "lesson-8-9-ecr"
+    IMAGE_NAME   = "lesson-db-module-ecr"
     IMAGE_TAG    = "v1.0.${BUILD_NUMBER}"
     COMMIT_EMAIL = "jenkins@localhost"
     COMMIT_NAME  = "jenkins"
@@ -59,7 +59,7 @@ spec:
             sh '''
               git config --global --add safe.directory '*'
               git clone https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
-              git checkout lesson-8-9
+              git checkout lesson-db-module
 
               git remote set-url origin https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
 
@@ -78,7 +78,7 @@ spec:
 
               git add values.yaml
               git commit -m "Update image tag to $IMAGE_TAG"
-              git push origin lesson-8-9
+              git push origin lesson-db-module
             '''
           }
         }

@@ -65,7 +65,7 @@ controller:
                         remote {
                           url("https://github.com/hrebynakha/goit-devops.git")
                         }
-                        branches("*/lesson-8-9")
+                        branches("*/lesson-db-module")
                       }
                     }
                     scriptPath("django/Jenkinsfile")

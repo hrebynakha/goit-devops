@@ -72,13 +72,13 @@ After all infrastructure is created we can see this output pods:
 
 Save ECR repository URL, it will be used to push image to ECR
 
-In my case it is: `322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-8-9-ecr`
+In my case it is: `322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-db-module-ecr`
 
 and provide it to Jenkinsfile:
 
 ```Jenkinsfile
 ECR_REGISTRY = "322345936550.dkr.ecr.eu-central-1.amazonaws.com"
-IMAGE_NAME   = "lesson-8-9-ecr"
+IMAGE_NAME   = "lesson-db-module-ecr"
 ```
 
 # EKS
