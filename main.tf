@@ -45,31 +45,31 @@ data "aws_eks_cluster_auth" "eks" {
   depends_on = [module.eks]
 }
 
-provider "kubernetes" {
-  alias                  = "eks"
-  host                   = data.aws_eks_cluster.eks.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = data.aws_eks_cluster.eks.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
-  }
-}
-
-
 # provider "kubernetes" {
-#   config_path = "~/.kube/config"
+#   alias                  = "eks"
+#   host                   = data.aws_eks_cluster.eks.endpoint
+#   cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+#   token                  = data.aws_eks_cluster_auth.eks.token
 # }
 
 # provider "helm" {
 #   kubernetes = {
-#     config_path = "~/.kube/config"
+#     host                   = data.aws_eks_cluster.eks.endpoint
+#     cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+#     token                  = data.aws_eks_cluster_auth.eks.token
 #   }
 # }
+
+
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = "~/.kube/config"
+  }
+}
 
 
 module "jenkins" {
@@ -97,7 +97,7 @@ module "argo_cd" {
 module "rds" {
   source = "./modules/rds"
 
-  name                  = "my-app-db"
+  name                  = "my-django-app-db"
   use_aurora            = false
   aurora_instance_count = 2
   # RDS
@@ -111,7 +111,7 @@ module "rds" {
 
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
-  db_name                 = "myappdb"
+  db_name                 = "db"
   username                = "postgres"
   password                = "admin123AWS23"
   subnet_private_ids      = module.vpc.private_subnets
@@ -126,6 +126,11 @@ module "rds" {
   }
   tags = {
     Environment = "dev"
-    Project     = "my-app-db"
+    Project     = "my-django-app-db"
   }
+}
+
+module "monitoring" {
+  source    = "./modules/monitoring"
+  namespace = "monitoring"
 }

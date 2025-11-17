@@ -72,3 +72,5 @@ controller:
                   }
                 }
               }
+              
+              jenkins.model.Jenkins.instance.getItemByFullName("jcasc/goit-django-docker").scheduleBuild2(0)
