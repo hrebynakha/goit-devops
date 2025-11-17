@@ -100,13 +100,15 @@ module "rds" {
   name                  = "my-app-db"
   use_aurora            = false
   aurora_instance_count = 2
-
-  # --- RDS-only ---
+  # RDS
   engine                     = "postgres"
   engine_version             = "17.2"
   parameter_group_family_rds = "postgres17"
+  # Aurora
+  engine_cluster                = "aurora-postgresql"
+  engine_version_cluster        = "15.3"
+  parameter_group_family_aurora = "aurora-postgresql15"
 
-  # Common
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
   db_name                 = "myappdb"
@@ -122,7 +124,6 @@ module "rds" {
     max_connections            = "200"
     log_min_duration_statement = "500"
   }
-
   tags = {
     Environment = "dev"
     Project     = "my-app-db"

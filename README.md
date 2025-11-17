@@ -1,64 +1,50 @@
 # Terraform
 
-In terraform we add new module for EKS:
+In terraform we add new module for RDS:
 
 ```hcl
 
+module "rds" {
+  source = "./modules/rds"
 
-data "aws_eks_cluster" "eks" {
-  name = module.eks.eks_cluster_name
+  name                  = "my-app-db"
+  use_aurora            = false
+  aurora_instance_count = 2
+  # RDS
+  engine                     = "postgres"
+  engine_version             = "17.2"
+  parameter_group_family_rds = "postgres17"
+  # Aurora
+  engine_cluster                = "aurora-postgresql"
+  engine_version_cluster        = "15.3"
+  parameter_group_family_aurora = "aurora-postgresql15"
 
-  depends_on = [module.eks]
-}
-
-data "aws_eks_cluster_auth" "eks" {
-  name = module.eks.eks_cluster_name
-
-  depends_on = [module.eks]
-}
-
-provider "kubernetes" {
-  alias                  = "eks"
-  host                   = data.aws_eks_cluster.eks.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = data.aws_eks_cluster.eks.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
+  instance_class          = "db.t3.micro"
+  allocated_storage       = 20
+  db_name                 = "myappdb"
+  username                = "postgres"
+  password                = "admin123AWS23"
+  subnet_private_ids      = module.vpc.private_subnets
+  subnet_public_ids       = module.vpc.public_subnets
+  publicly_accessible     = true
+  vpc_id                  = module.vpc.vpc_id
+  multi_az                = true
+  backup_retention_period = 0
+  parameters = {
+    max_connections            = "200"
+    log_min_duration_statement = "500"
+  }
+  tags = {
+    Environment = "dev"
+    Project     = "my-app-db"
   }
 }
-
-
-module "jenkins" {
-  source       = "./modules/jenkins"
-  cluster_name = module.eks.eks_cluster_name
-  providers = {
-    helm = helm
-  }
-  oidc_provider_arn = module.eks.oidc_provider_arn
-  oidc_provider_url = module.eks.oidc_provider_url
-
-  depends_on = [
-    module.eks
-  ]
-}
-
-
-module "argo_cd" {
-  source        = "./modules/argo-cd"
-  namespace     = "argocd"
-  chart_version = "5.46.4"
-}
-
-
 
 ```
 
-And apply changes:
+And also describe RDS module with Aurora in **modules/rds/rds.tf** and **modules/rds/aurora.tf**
+
+After apply our changes:
 
 ```bash
 terraform init
@@ -70,110 +56,54 @@ After all infrastructure is created we can see this output pods:
 
 ![pods](./images/pods.png)
 
-Save ECR repository URL, it will be used to push image to ECR
 
-In my case it is: `322345936550.dkr.ecr.eu-central-1.amazonaws.com/lesson-db-module-ecr`
+After database is created we can see this in AWS console:
 
-and provide it to Jenkinsfile:
+![db](./images/db.png)
 
-```Jenkinsfile
-ECR_REGISTRY = "322345936550.dkr.ecr.eu-central-1.amazonaws.com"
-IMAGE_NAME   = "lesson-db-module-ecr"
-```
 
-# EKS
-For EKS cluster we need to get kubeconfig file
 
-`aws eks --region eu-central-1 update-kubeconfig --name eks-lesson8-9-cluster`
+and now we can connect our app to database using only Jenkins pipeline and ArgoCD:
 
-Check if it is working:
 
-`kubectl get nodes`
+# App Changes
 
-After this we can comment our providers in main.tf file
-and use the local config:
+Update our config in **settings.py** from sqlite to postgresql:
 
-```hcl
-provider "kubernetes" {
-  config_path = "~/.kube/config"
-}
+```python
+POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5433")
+POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
+POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "password")
 
-provider "helm" {
-  kubernetes = {
-    config_path = "~/.kube/config"
-  }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "HOST": POSTGRES_HOST,
+        "PORT": int(POSTGRES_PORT),
+        "NAME": POSTGRES_DB,
+        "USER": POSTGRES_USER,
+        "PASSWORD": POSTGRES_PASSWORD,
+    }
 }
 ```
+Push and build with Jenkins pipeline:
 
-# Jenkins
+![pipeline](./images/jenkins.png)
 
-Jenkins we autoconfigure using the JCasC
-
-
-add credentials to jenkins:
-
-```yaml
-credentials: |
-        credentials:
-          system:
-            domainCredentials:
-              - credentials:
-                  - usernamePassword:
-                      scope: GLOBAL
-                      id: github-token
-                      username: hrebynakha
-                      password: # provide your github token here
-                      description: GitHub PAT
-```
-
-add new job to jenkins:
-
-```yaml
-jobs:
-- script: |
-    folder('jcasc') # create folder jcasc
-
-- script: |
-    pipelineJob("jcasc/goit-django-docker")  # create pipeline job
-    ....
-```
-
-
-
-In Jenkins we can see this:
-Credentials:
-![credentials](./images/jks-pat.png)
-
-JCasC:
-![jcasc](./images/jcasc.png)
-
-
-
-
-after this we can run pipeline job:
-
-![pipeline](./images/jks-job.png)
 
 # ArgoCD
 
-ArgoCD we autoconfigure using the  helm chart
-In the  argocd module we provide values.yaml file with the values for the chart to add application automatically
+For ArgoCD we use helm chart to deploy application and provide db connection values in values.yaml file:
 ```yaml
-repositories:
-  - name: goit-devops-django-app
-    url: "https://github.com/hrebynakha/goit-devops.git"
-    username: hrebynakha
-    password: # provide your github token here
+config:
+  POSTGRES_PORT: 5432
+  POSTGRES_HOST: dbhost.rds.amazonaws.com # from RDS module
+  POSTGRES_USER: postgres
+  POSTGRES_DB: myappdb
+  POSTGRES_PASSWORD: dbpassword # from RDS module
 ```
-To verify that our helm chart was deployed we can use `k9s` to see it:
+To verify that connection is working we can forward port to local machine using `k9s` and open our application in browser:
 
-![helm](./images/helm-charts.png)
-
-After argocd module was up by terraform and helm chart was deployed we can see application in argocd:
-
-![argocd](./images/argo-app.png)
-
-
-After application was synchronized and forwarding port to local machine we can see this:
-
-![TestApp](./images/app-tes.png)
+![TestApp](./images/app-test.png)

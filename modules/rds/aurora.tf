@@ -3,6 +3,7 @@ resource "aws_rds_cluster" "aurora" {
   count                           = var.use_aurora ? 1 : 0
   cluster_identifier              = "${var.name}-cluster"
   engine                          = var.engine_cluster
+  engine_mode                     = "serverless"
   engine_version                  = var.engine_version_cluster
   master_username                 = var.username
   master_password                 = var.password
@@ -10,11 +11,11 @@ resource "aws_rds_cluster" "aurora" {
   db_subnet_group_name            = aws_db_subnet_group.default.name
   vpc_security_group_ids          = [aws_security_group.rds.id]
   backup_retention_period         = var.backup_retention_period
-  skip_final_snapshot             = false
   final_snapshot_identifier       = "${var.name}-final-snapshot"
+  storage_encrypted               = false
+  skip_final_snapshot             = true
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.aurora[0].name
-
-  tags = var.tags
+  tags                            = var.tags
 }
 
 # Writer instance
@@ -26,8 +27,7 @@ resource "aws_rds_cluster_instance" "aurora_writer" {
   engine               = var.engine_cluster
   db_subnet_group_name = aws_db_subnet_group.default.name
   publicly_accessible  = var.publicly_accessible
-
-  tags = var.tags
+  tags                 = var.tags
 }
 
 # Reader replicas
@@ -39,8 +39,7 @@ resource "aws_rds_cluster_instance" "aurora_readers" {
   engine               = var.engine_cluster
   db_subnet_group_name = aws_db_subnet_group.default.name
   publicly_accessible  = var.publicly_accessible
-
-  tags = var.tags
+  tags                 = var.tags
 }
 
 # Aurora parameter group
@@ -49,7 +48,6 @@ resource "aws_rds_cluster_parameter_group" "aurora" {
   name        = "${var.name}-aurora-params"
   family      = var.parameter_group_family_aurora
   description = "Aurora PG for ${var.name}"
-
   dynamic "parameter" {
     for_each = var.parameters
     content {
@@ -58,6 +56,5 @@ resource "aws_rds_cluster_parameter_group" "aurora" {
       apply_method = "pending-reboot"
     }
   }
-
   tags = var.tags
 }
