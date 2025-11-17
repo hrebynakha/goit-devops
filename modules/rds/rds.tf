@@ -1,5 +1,5 @@
 # Standard RDS Instance
-resource "aws_db_instance" "standard" {
+resource "aws_db_instance" "free_tier_rds" {
   count                   = var.use_aurora ? 0 : 1
   identifier              = var.name
   engine                  = var.engine

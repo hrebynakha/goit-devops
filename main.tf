@@ -107,9 +107,9 @@ module "rds" {
   parameter_group_family_rds = "postgres17"
 
   # Common
-  instance_class          = "db.t3.medium"
+  instance_class          = "db.t3.micro"
   allocated_storage       = 20
-  db_name                 = "my-app-db"
+  db_name                 = "myappdb"
   username                = "postgres"
   password                = "admin123AWS23"
   subnet_private_ids      = module.vpc.private_subnets
@@ -117,7 +117,7 @@ module "rds" {
   publicly_accessible     = true
   vpc_id                  = module.vpc.vpc_id
   multi_az                = true
-  backup_retention_period = 7
+  backup_retention_period = 0
   parameters = {
     max_connections            = "200"
     log_min_duration_statement = "500"
