@@ -16,3 +16,20 @@ variable "oidc_provider_arn" {
 variable "oidc_provider_url" {
   type = string
 }
+
+
+variable "admin_password" {
+  type      = string
+  sensitive = true
+}
+
+
+variable "github_user" {
+  type = string
+}
+
+variable "github_token" {
+  type      = string
+  sensitive = true
+}
+

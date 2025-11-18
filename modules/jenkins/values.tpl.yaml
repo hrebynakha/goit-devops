@@ -1,7 +1,7 @@
 controller:
   admin:
     username: admin
-    password: admin123
+    password: ${admin_password}
 
   serviceType: LoadBalancer
   servicePort: 80
@@ -48,8 +48,8 @@ controller:
                   - usernamePassword:
                       scope: GLOBAL
                       id: github-token
-                      username: hrebynakha
-                      password:
+                      username: ${github_user}
+                      password: ${github_token}
                       description: GitHub PAT
       job-config: |
         jobs:
@@ -65,7 +65,7 @@ controller:
                         remote {
                           url("https://github.com/hrebynakha/goit-devops.git")
                         }
-                        branches("*/lesson-db-module")
+                        branches("*/final-project")
                       }
                     }
                     scriptPath("django/Jenkinsfile")

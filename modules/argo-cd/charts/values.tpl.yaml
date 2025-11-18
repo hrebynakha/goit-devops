@@ -20,8 +20,8 @@ applications:
 repositories:
   - name: goit-devops-django-app
     url: "https://github.com/hrebynakha/goit-devops.git"
-    username: hrebynakha
-    password:
+    username: ${github_user}
+    password: ${github_token}
 
 repoConfig:
   insecure: "true"

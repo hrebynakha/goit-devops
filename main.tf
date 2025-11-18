@@ -2,7 +2,7 @@
 
 module "s3_backend" {
   source      = "./modules/s3-backend"
-  bucket_name = "test-django-app-lesson-db-module"
+  bucket_name = "test-django-app-fp"
   table_name  = "terraform-locks"
 }
 
@@ -12,13 +12,13 @@ module "vpc" {
   public_subnets     = ["10.0.1.0/24", "10.0.3.0/24", "10.0.5.0/24"]
   private_subnets    = ["10.0.2.0/24", "10.0.4.0/24", "10.0.6.0/24"]
   availability_zones = ["eu-central-1a", "eu-central-1b", "eu-central-1c"]
-  vpc_name           = "test-lesson-db-module-vpc"
+  vpc_name           = "fp-vpc"
 }
 
 
 module "ecr" {
   source       = "./modules/ecr"
-  ecr_name     = "lesson-db-module-ecr"
+  ecr_name     = "fp-ecr"
   scan_on_push = true
 }
 
@@ -45,31 +45,31 @@ data "aws_eks_cluster_auth" "eks" {
   depends_on = [module.eks]
 }
 
-# provider "kubernetes" {
-#   alias                  = "eks"
-#   host                   = data.aws_eks_cluster.eks.endpoint
-#   cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-#   token                  = data.aws_eks_cluster_auth.eks.token
-# }
-
-# provider "helm" {
-#   kubernetes = {
-#     host                   = data.aws_eks_cluster.eks.endpoint
-#     cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-#     token                  = data.aws_eks_cluster_auth.eks.token
-#   }
-# }
-
-
 provider "kubernetes" {
-  config_path = "~/.kube/config"
+  alias                  = "eks"
+  host                   = data.aws_eks_cluster.eks.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.eks.token
 }
 
 provider "helm" {
   kubernetes = {
-    config_path = "~/.kube/config"
+    host                   = data.aws_eks_cluster.eks.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.eks.token
   }
 }
+
+
+# provider "kubernetes" {
+#   config_path = "~/.kube/config"
+# }
+
+# provider "helm" {
+#   kubernetes = {
+#     config_path = "~/.kube/config"
+#   }
+# }
 
 
 module "jenkins" {
@@ -80,6 +80,9 @@ module "jenkins" {
   }
   oidc_provider_arn = module.eks.oidc_provider_arn
   oidc_provider_url = module.eks.oidc_provider_url
+  admin_password    = var.jenkins_password
+  github_user       = var.github_user
+  github_token      = var.github_token
 
   depends_on = [
     module.eks
@@ -91,6 +94,8 @@ module "argo_cd" {
   source        = "./modules/argo-cd"
   namespace     = "argocd"
   chart_version = "5.46.4"
+  github_user   = var.github_user
+  github_token  = var.github_token
 }
 
 
@@ -112,8 +117,8 @@ module "rds" {
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
   db_name                 = "db"
-  username                = "postgres"
-  password                = "admin123AWS23"
+  username                = var.db_username
+  password                = var.db_password
   subnet_private_ids      = module.vpc.private_subnets
   subnet_public_ids       = module.vpc.public_subnets
   publicly_accessible     = true

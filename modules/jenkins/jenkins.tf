@@ -84,7 +84,11 @@ resource "helm_release" "jenkins" {
   create_namespace = true
 
   values = [
-    file("${path.module}/values.yaml")
+    templatefile("${path.module}/values.tpl.yaml", {
+      admin_password = var.admin_password
+      github_user    = var.github_user
+      github_token   = var.github_token
+    })
   ]
 
 }
