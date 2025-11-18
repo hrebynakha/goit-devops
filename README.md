@@ -110,3 +110,10 @@ To verify that connection is working we can forward port to local machine using 
 
 > WARNING: do not use this in production, it is just for testing
 > NOTE: all secret values are destroyed or replaced
+
+```
+kubectl get secret --namespace monitoring grafana \
+    -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+```
+ARyeacMHJeZ3r5l1IEAo3F3HpI7fXtrnWhN5YeGJ

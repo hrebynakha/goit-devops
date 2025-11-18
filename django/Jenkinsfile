@@ -59,7 +59,7 @@ spec:
             sh '''
               git config --global --add safe.directory '*'
               git clone https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
-              git checkout lesson-db-module
+              git checkout final-project
 
               git remote set-url origin https://$GIT_USERNAME:$GIT_PAT@github.com/hrebynakha/goit-devops.git
 
@@ -78,7 +78,7 @@ spec:
 
               git add values.yaml
               git commit -m "Update image tag to $IMAGE_TAG"
-              git push origin lesson-db-module
+              git push origin final-project
             '''
           }
         }

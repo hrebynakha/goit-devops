@@ -45,31 +45,31 @@ data "aws_eks_cluster_auth" "eks" {
   depends_on = [module.eks]
 }
 
-provider "kubernetes" {
-  alias                  = "eks"
-  host                   = data.aws_eks_cluster.eks.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = data.aws_eks_cluster.eks.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
-  }
-}
-
-
 # provider "kubernetes" {
-#   config_path = "~/.kube/config"
+#   alias                  = "eks"
+#   host                   = data.aws_eks_cluster.eks.endpoint
+#   cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+#   token                  = data.aws_eks_cluster_auth.eks.token
 # }
 
 # provider "helm" {
 #   kubernetes = {
-#     config_path = "~/.kube/config"
+#     host                   = data.aws_eks_cluster.eks.endpoint
+#     cluster_ca_certificate = base64decode(data.aws_eks_cluster.eks.certificate_authority[0].data)
+#     token                  = data.aws_eks_cluster_auth.eks.token
 #   }
 # }
+
+
+provider "kubernetes" {
+  config_path = "~/.kube/config"
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = "~/.kube/config"
+  }
+}
 
 
 module "jenkins" {
@@ -116,7 +116,7 @@ module "rds" {
 
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
-  db_name                 = "db"
+  db_name                 = "myappdb"
   username                = var.db_username
   password                = var.db_password
   subnet_private_ids      = module.vpc.private_subnets
