@@ -1,119 +1,96 @@
 # Terraform
 
-In terraform we add new module for RDS:
+In terraform we add new module for monitoring using Grafana and Prometheus:
 
 ```hcl
-
-module "rds" {
-  source = "./modules/rds"
-
-  name                  = "my-app-db"
-  use_aurora            = false
-  aurora_instance_count = 2
-  # RDS
-  engine                     = "postgres"
-  engine_version             = "17.2"
-  parameter_group_family_rds = "postgres17"
-  # Aurora
-  engine_cluster                = "aurora-postgresql"
-  engine_version_cluster        = "15.3"
-  parameter_group_family_aurora = "aurora-postgresql15"
-
-  instance_class          = "db.t3.micro"
-  allocated_storage       = 20
-  db_name                 = "myappdb"
-  username                = "postgres"
-  password                = "admin123AWS23"
-  subnet_private_ids      = module.vpc.private_subnets
-  subnet_public_ids       = module.vpc.public_subnets
-  publicly_accessible     = true
-  vpc_id                  = module.vpc.vpc_id
-  multi_az                = true
-  backup_retention_period = 0
-  parameters = {
-    max_connections            = "200"
-    log_min_duration_statement = "500"
-  }
-  tags = {
-    Environment = "dev"
-    Project     = "my-app-db"
-  }
+module "monitoring" {
+  source    = "./modules/monitoring"
+  namespace = "monitoring"
 }
+```
+
+And also describe monitoring module in **modules/monitoring/monitoring.tf**
+
+Also add the secret file for make this project more secure:
+
+Create the `secret.tfvars` file named
+
+```
+db_username = "postgres"
+db_password = "NotRealPassword"
+github_token = "ghp_someSecretToken123"
+github_user  = "hrebynakha"
+jenkins_password = "NotRealPassword"
 
 ```
 
-And also describe RDS module with Aurora in **modules/rds/rds.tf** and **modules/rds/aurora.tf**
-
-After apply our changes:
+When apply changes also add to param `-var-file="secret.tfvars"`:
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform plan -var-file="secret.tfvars"
+terraform apply -var-file="secret.tfvars"
 ```
 
-After all infrastructure is created we can see this output pods:
 
-![pods](./images/pods.png)
-
-
-After database is created we can see this in AWS console:
-
-![db](./images/db.png)
+# Infrastructure
 
 
+After infrastructure is created, we can check the our pods using kubectl:
 
-and now we can connect our app to database using only Jenkins pipeline and ArgoCD:
+![Jenkins](./images/jenkins.png)
 
+![ArgoCD](./images/argo.png)
 
-# App Changes
-
-Update our config in **settings.py** from sqlite to postgresql:
-
-```python
-POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.environ.get("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.environ.get("POSTGRES_DB", "postgres")
-POSTGRES_USER = os.environ.get("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "password")
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "HOST": POSTGRES_HOST,
-        "PORT": int(POSTGRES_PORT),
-        "NAME": POSTGRES_DB,
-        "USER": POSTGRES_USER,
-        "PASSWORD": POSTGRES_PASSWORD,
-    }
-}
-```
-Push and build with Jenkins pipeline:
-
-![pipeline](./images/jenkins.png)
-
+![Monitoring](./images/monitoring.png)
 
 # ArgoCD
 
-For ArgoCD we use helm chart to deploy application and provide db connection values in values.yaml file:
-```yaml
-config:
-  POSTGRES_PORT: 5432
-  POSTGRES_HOST: dbhost.rds.amazonaws.com # from RDS module
-  POSTGRES_USER: postgres
-  POSTGRES_DB: myappdb
-  POSTGRES_PASSWORD: dbpassword # from RDS module
+Get ArgoCD admin password:
+
 ```
-To verify that connection is working we can forward port to local machine using `k9s` and open our application in browser:
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d;echo
+```
 
-![TestApp](./images/app-test.png)
 
-> WARNING: do not use this in production, it is just for testing
-> NOTE: all secret values are destroyed or replaced
+# Monitoring
+
+
+### Prometheus Metrics
+To check the Prometheus metrics you can forward to local port prometheus server:
+![prometheus](./images/prom.png)
+
+
+### Grafana
+Get Grafana admin password:
 
 ```
 kubectl get secret --namespace monitoring grafana \
     -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 
 ```
-ARyeacMHJeZ3r5l1IEAo3F3HpI7fXtrnWhN5YeGJ
+
+
+Forward port to local machine and open Grafana in browser:
+After importing the dashboard, you can see the metrics in Grafana:
+
+![Grafana](./images/grafana.png)
+
+
+
+# App
+
+
+Build the image with Jenkins:
+
+![Build Jenkins](./images/build.png)
+
+
+After building the image, ArgoCD will automatically deploy it to the cluster.
+
+![ArgoCD Deployment](./images/argo-app.png)
+
+
+And we can forward port to local machine and tets connection to DB using out app:
+
+![DB Connection](./images/app-test.png)
